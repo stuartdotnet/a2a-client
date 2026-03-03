@@ -1,39 +1,39 @@
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);                                                                                                                                           
-                                                                                                                                                                                              
-  builder.Services.AddSingleton<AgentRegistry>();                                                                                                                                          
-  builder.Services.AddHttpClient<A2AClient>();
 
-  var app = builder.Build();
+builder.Services.AddSingleton<AgentRegistry>();                                                                                                                                          
+builder.Services.AddHttpClient<A2AClient>();
 
-  var registry = app.Services.GetRequiredService<AgentRegistry>();
-  await registry.RegisterAsync("http://localhost:5001/a2a/code-review/v1/card");
+var app = builder.Build();
 
-  app.MapPost("/review", async (
-      ReviewRequest req,
-      AgentRegistry registry,
-      A2AClient client,
-      CancellationToken cancellationToken) =>
-  {
-      var specialist = registry.FindBySkill("code-review").FirstOrDefault()
-          ?? registry.Find("Code Review Agent");
+var registry = app.Services.GetRequiredService<AgentRegistry>();
+await registry.RegisterAsync("http://localhost:5001/a2a/code-review/v1/card");
 
-      if (specialist is null)
-          return Results.Problem("No code review agent available.");
+app.MapPost("/review", async (
+    ReviewRequest req,
+    AgentRegistry registry,
+    A2AClient client,
+    CancellationToken cancellationToken) =>
+{
+    var specialist = registry.FindBySkill("code-review").FirstOrDefault()
+        ?? registry.Find("Code Review Agent");
 
-      var streamUrl = $"{specialist.Card.Url}/v1/message:stream";
-      Console.WriteLine($"Calling: {streamUrl}");
+    if (specialist is null)
+        return Results.Problem("No code review agent available.");
 
-      var result = new StringBuilder();
+    var streamUrl = $"{specialist.Card.Url}/v1/message:stream";
+    Console.WriteLine($"Calling: {streamUrl}");
 
-      await foreach (var chunk in client.StreamAsync(streamUrl, req.Code, cancellationToken))
-          result.Append(chunk);
+    var result = new StringBuilder();
 
-      // Easy-to-read result
-      return Results.Text(result.ToString());
-  });
+    await foreach (var chunk in client.StreamAsync(streamUrl, req.Code, cancellationToken))
+        result.Append(chunk);
 
-  app.Run();
+    // Easy-to-read result
+    return Results.Text(result.ToString());
+});
 
-  record ReviewRequest(string Code);
+app.Run();
+
+record ReviewRequest(string Code);
