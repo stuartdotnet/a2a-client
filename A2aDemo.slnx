@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CodeReviewAgent/CodeReviewAgent.csproj" />
+  <Project Path="OrchestratorAgent/OrchestratorAgent.csproj" />
+</Solution>
